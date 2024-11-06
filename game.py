@@ -45,7 +45,7 @@ win = pygame.image.load("win.png")
 
 class pause:
     sprite = pygame.image.load("pause.png")
-    coords = [random.randint(0,game_size[0] - int(game_size[0]/6) - 1), random.randint(0,game_size[1] - int(game_size[1]/4))]
+    coords = [random.randint(0,game_size[0]*60 - sprite.get_width()), random.randint(0,game_size[1]*60 - sprite.get_height())]
     direction = [random.choice([-1,1]), random.choice([-1,1])]
     def render_other_sprites():
         window_surface.blit(apple.sprite, (apple.coords[0]*60 + 5, 60 * game_size[1] - apple.coords[1]*60 + 5))
@@ -60,12 +60,18 @@ class player:
     coords = [[int(game_size[0]/2) + 1, int(game_size[1]/2)],[int(game_size[0]/2), int(game_size[1]/2)],[int(game_size[0]/2) - 1, int(game_size[1]/2)]]
     direction = [1,0]
     size = 2
+    turns = []
     def move():
         if moving:
             for i in range(player.size, 0, -1):  
                 player.coords[i] = player.coords[i - 1][:]  
 
             player.coords[0] = vector_sum(player.coords[0], player.direction)
+    def turn():
+        if player.turns != []:
+            if player.direction[0] != -player.turns[0][0] and player.direction[1] != -player.turns[0][1]: 
+                player.direction = player.turns[0]
+            player.turns.pop(0)
 
 class apple:
     sprite = pygame.image.load("apple.png")
@@ -81,19 +87,23 @@ while is_running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
             is_running = False
-        # TODO: rewrite the control system to be able to enter a queue of keys, and turn in accord to this queue. Add a list of the queue, and append it everytime an arrow key is pressed. Then do the turning in the player.move() function 
+        
         if event.type == pygame.KEYDOWN:
             if event.key in [pygame.K_UP, pygame.K_w] and player.direction != [0, -1]:
-                player.direction = [0,1]
+                #player.direction = [0,1]
+                player.turns.append([0,1])
                 player.head = pygame.transform.rotate(player.original_head, 90)
             if event.key in [pygame.K_DOWN, pygame.K_s] and player.direction != [0, 1]:
-                player.direction = [0,-1]
+                #player.direction = [0,-1]
+                player.turns.append([0,-1])
                 player.head = pygame.transform.rotate(player.original_head, 270)
             if event.key in [pygame.K_RIGHT, pygame.K_d] and player.direction != [-1, 0]:
-                player.direction = [1,0]
+                #player.direction = [1,0]
+                player.turns.append([1,0])
                 player.head = player.original_head
             if event.key in [pygame.K_LEFT, pygame.K_a] and player.direction != [1, 0]:
-                player.direction = [-1,0]
+                #player.direction = [-1,0]
+                player.turns.append([-1,0])
                 player.head = pygame.transform.rotate(player.original_head, 180)
             if event.key == pygame.K_r:
                 player.coords = [[int(game_size[0]/2) + 1, int(game_size[1]/2)],[int(game_size[0]/2), int(game_size[1]/2)],[int(game_size[0]/2) - 1, int(game_size[1]/2)]]
@@ -108,7 +118,6 @@ while is_running:
                 paused = not paused
                 moving = not moving
 
-    #if (datetime.datetime.now() - now).total_seconds() < 1/framerate and not paused and not won: continue # and not paused
     window_surface.blit(apple.sprite, (apple.coords[0]*60 + 5, 60 * game_size[1] - apple.coords[1]*60 + 5))
     for i in range(1, player.size+1):
         window_surface.blit(player.body, (player.coords[i][0]*60 + 5, 60 * game_size[1] - player.coords[i][1]*60 + 5))
@@ -148,20 +157,17 @@ while is_running:
                 data.write(str(new_data).replace("'", "\""))
             data.close()
 
-    # TODO: rewrite to depend not on the grid system of the playing area, but on the screen itself
     if paused:
-        #if pause.coords[1] <= 0 or pause.coords[1] >= game_size[1]-4:
-        #    pause.direction[1] = - pause.direction[1]
-        if min(max(0, pause.coords[0]), game_size[0]-5) in [0, game_size[0]-5]:
+        if min(max(0, pause.coords[0]), game_size[0]*60-pause.sprite.get_width()) in [0, game_size[0]*60-pause.sprite.get_width()]:
             pause.direction[0] = - pause.direction[0]
-        if min(max(0, pause.coords[1]), game_size[1]-5) in [0, game_size[1]-5]:
+        if min(max(0, pause.coords[1]), game_size[1]*60-pause.sprite.get_height()) in [0, game_size[1]*60-pause.sprite.get_height()]:
             pause.direction[1] = - pause.direction[1]
-        for i in range(60):
-            window_surface.fill("black")
-            pause.render_other_sprites()
-            window_surface.blit(pause.sprite, (pause.coords[0]*60+i*pause.direction[0], pause.coords[1]*60+i*pause.direction[1]))
-            time.sleep(0.1/60)
-            pygame.display.update()
+
+        window_surface.fill("black")
+        pause.render_other_sprites()
+        window_surface.blit(pause.sprite, (pause.coords[0], pause.coords[1]))
+        time.sleep(0.1/60)
+        pygame.display.update()
         pause.coords = vector_sum(pause.coords, pause.direction)
 
 
@@ -194,9 +200,5 @@ while is_running:
     if icn < 7: icn += 1
     else: icn = 0
     pygame.display.set_caption(f'Snake v2.0 --- score: {player.size - 2} --- highscore: {playerdata["highscore"]}')
+    player.turn()
     player.move()
-    #time.sleep(1/framerate)
-    #pygame.display.update()
-
-
-# TODO: 151, 
