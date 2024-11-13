@@ -42,6 +42,7 @@ icons = [pygame.image.load(f"icon/icon-{i}.png") for i in range(1,9)]
 icn = 0
 
 win = pygame.image.load("win.png")
+jumpscare = pygame.image.load("jumpscare.png")
 
 class pause:
     sprite = pygame.image.load("pause.png")
@@ -77,6 +78,19 @@ class apple:
     sprite = pygame.image.load("apple.png")
     coords = [int(2/3 * game_size[0]), int(game_size[1]/2)]
     def new_apple():
+        chance = random.randint(0,6)
+        print(chance)
+        if chance == 1:
+            window_surface.fill((75,0,0))
+            pygame.mixer.music.load('jumpscare-sound.mp3')
+            pygame.mixer.music.play(1)
+            for i in range(15):
+                jumpscale = pygame.transform.scale(jumpscare, (int(jumpscare.get_width()*(i**2)/100), int(jumpscare.get_height()*(i**2)/100)))
+                window_surface.blit(jumpscale, [game_size[0]*60/2 - jumpscale.get_width()/2, game_size[1]*60/2 - jumpscale.get_height()/2])
+                pygame.display.update()
+                time.sleep(0.02)
+            time.sleep(3)
+
         while True:
             apple.coords = [random.randint(1, game_size[0]-1), random.randint(1, game_size[1]-1)]
             if apple.coords not in player.coords or won:
